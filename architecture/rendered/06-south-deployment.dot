@@ -1,0 +1,59 @@
+digraph G {
+  graph [fontname="Arial", bgcolor="white", labeljust=l, labelloc=t, fontsize=19, fontcolor="#18344e", pad=0.35, nodesep=0.65, ranksep=0.90, splines=polyline, overlap=false, concentrate=false, outputorder=edgesfirst];
+  graph [label=<Sito South: self-service e ripristino a caldo<BR/><FONT POINT-SIZE="12">Architettura proposta | non è un sistema in esercizio</FONT><BR/><FONT POINT-SIZE="10" COLOR="#496377">Notazione in stile C4 resa con Graphviz (non Structurizr). Riquadro: nome, [tipo C4: tecnologia] | sito, owner; nel file SVG la descrizione compare al passaggio del mouse.</FONT><BR/><FONT POINT-SIZE="10" COLOR="#496377">Freccia rossa tratteggiata: flusso tra siti attraverso i firewall di Network Security, con il relativo F-ID (docs/12).</FONT>>, rankdir=LR];
+  node [shape=box, style="rounded,filled", fontname="Arial"];
+  edge [fontname="Arial", fontsize=8.5, color="#60778c", fontcolor="#526478", arrowsize=0.67, penwidth=1.3];
+  subgraph cluster_0 {
+    label="South: attivo indipendente + standby"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "smanagement" [label="Management cluster\nKubernetes di South\n[Nodo di deployment: CAPI/CAPV,\nFlux, runner OpenTofu, relay di\naudit, Backstage primario] | South\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Gestisce solo i cluster di South tramite il vCenter di South."];
+    "sobserv" [label="Cluster Kubernetes di\nosservabilità di South\n[Nodo di deployment: Mimir, Loki,\nTempo, Grafana, gateway,\nAlertmanager, metamonitoring] |\nSouth\nOwner: SRE", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Cluster di osservabilità di South; assorbe la telemetria della produzione ripristinata."];
+    "sdr" [label="South: 10 cluster Kubernetes\nDR caldi\n[Nodo di deployment: Kubernetes\n(CAPV), overlay DR: repliche 0,\nsospeso] | South\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Dieci controparti DR calde con capacità riservata."];
+    "snonprod" [label="South: 6 cluster non di\nproduzione\n[Nodo di deployment: Kubernetes\n(CAPV), namespace golden path] |\nSouth\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Cluster dev/test condivisi; soggetti a preemption sotto pressione DR."];
+    "sgeo" [label="GitLab Geo secondario di\nSouth + artefatti del\nregistry\n[Nodo di deployment: GitLab Geo\nsecondario, replica del registry\nconfigurata] | South\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="In sola lettura fino alla promozione."];
+    "sdata" [label="Repliche database di South /\npromozione\n[Nodo di deployment: Repliche\nSQL/NoSQL] | South\nOwner: Data Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Replicate in continuo; promosse dopo il fencing."];
+    "sss3" [label="Storage S3 locale di\nosservabilità di South\n[Archivio dati: Compatibile S3,\nlocale al sito, prefisso DR] |\nSouth\nOwner: Data Engineering", fillcolor="#f5eafd", color="#835a9f", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Object storage per l'LGTM di South e per lo storico di capacità copiato."];
+    "saudit" [label="Copia di audit immutabile di\nSouth\n[Archivio dati: Compatibile S3,\nObject Lock in compliance mode] |\nSouth\nOwner: Data Engineering (storage);\nadmin della retention designato\ndal CISO", fillcolor="#f5eafd", color="#835a9f", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Secondo archivio di audit a 400 giorni, perché le evidenze sopravvivano alla perdita di North o di Central (ADR 0010)."];
+    "ssvc" [label="Servizi di sito di South\n(attivi prima del disastro)\n[Nodo di deployment: Istanza IdP,\nCA emittente, secret manager,\nHSM/KMS, DNS secondari, NTP] |\nSouth\nOwner: Network Security", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Servono South e la produzione ripristinata senza Central (ADR 0011)."];
+    "svcenter" [label="vCenter di South\n(indipendente)\n[Nodo di deployment: VMware\nvCenter, identità solo South] |\nSouth\nOwner: Platform Engineering (con\nl'owner VMware)", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Destinazione del CAPV di South; capacità riservata ai worker pool DR."];
+    "sreg" [label="Registry OCI di South\n[Nodo di deployment: Registry OCI:\nimmagini di release, attestazioni,\nartefatti OCI Flux firmati] |\nSouth\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Contiene ogni release di produzione, così il DR non richiede GitLab (ADR 0007)."];
+  }
+  subgraph cluster_1 {
+    label="Central: primario"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "cgit" [label="GitLab primario di Central +\nregistry\n[Nodo di deployment: GitLab\nUltimate primario + registry] |\nCentral\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Git e CI di riferimento nel funzionamento normale."];
+    "csvc" [label="Servizi di sito di Central\n[Nodo di deployment: IdP, CA\nemittente, secret manager,\nHSM/KMS, DNS, NTP] | Central\nOwner: Network Security", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Istanze Central dei servizi abilitanti, sincronizzate verso South."];
+    "cobserv" [label="Cluster Kubernetes di\nosservabilità di Central\n[Nodo di deployment: Mimir, Loki,\nTempo, Grafana, gateway,\nAlertmanager, metamonitoring] |\nCentral\nOwner: SRE", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Cluster di osservabilità di Central."];
+    "cdata" [label="Database di produzione di\nCentral\n[Nodo di deployment: Primari\nSQL/NoSQL] | Central\nOwner: Data Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Database di produzione."];
+    "cmanagement" [label="Management cluster\nKubernetes di Central\n[Nodo di deployment: CAPI/CAPV,\nFlux, runner OpenTofu, relay di\naudit, Backstage in standby] |\nCentral\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Gestisce solo i cluster di Central tramite il vCenter di Central."];
+  }
+  subgraph cluster_2 {
+    label="North: archivio immutabile"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "ncold" [label="Archivio immutabile di North\n(audit + backup)\n[Nodo di deployment: Compatibile\nS3, Object Lock in compliance\nmode] | North\nOwner: Data Engineering (storage);\nadmin della retention designato\ndal CISO", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Backup immutabili versionati e archivio di audit a 400 giorni; amministrato separatamente (ADR 0010)."];
+    "nrestore" [label="Endpoint di restore di North\n+ escrow delle chiavi\n[Nodo di deployment: Servizio di\nrestore + escrow delle chiavi] |\nNorth\nOwner: Data Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Ripristina i backup versionati quando si perde Central."];
+  }
+  "smanagement" -> "sdr" [label="Prepara / promuove\ndopo il fencing", color="#60778c", style="solid"];
+  "smanagement" -> "snonprod" [label="Catalogo / GitOps", color="#60778c", style="solid"];
+  "sdr" -> "sobserv" [label="Telemetria locale\ndopo il failover", color="#60778c", style="solid"];
+  "snonprod" -> "sobserv" [label="Telemetria locale al\nsito", color="#60778c", style="solid"];
+  "sobserv" -> "sss3" [label="Operazioni su object\nstorage locale", color="#60778c", style="solid"];
+  "sgeo" -> "smanagement" [label="GitLab locale dopo\nla promozione", color="#60778c", style="solid"];
+  "sdata" -> "sdr" [label="Workload stateful\nripristinati", color="#60778c", style="solid"];
+  "sgeo" -> "cgit" [label="Geo: South avvia DB\n5432 / HTTPS (F-01)", color="#b25354", style="dashed"];
+  "smanagement" -> "ncold" [label="Relay di audit\n(F-04)", color="#b25354", style="dashed"];
+  "smanagement" -> "saudit" [label="Copia di audit\nlocale", color="#60778c", style="solid"];
+  "smanagement" -> "svcenter" [label="Provisioning CAPV\n(identità South)", color="#60778c", style="solid"];
+  "sdr" -> "sreg" [label="Pull di immagini\nfirmate + stato\ndesiderato OCI Flux", color="#60778c", style="solid"];
+  "sdr" -> "ssvc" [label="OIDC, certificati,\nsecret, DNS", color="#60778c", style="solid"];
+  "cgit" -> "sreg" [label="Copia delle release:\nimmagini + artefatti\nOCI (F-13)", color="#b25354", style="dashed"];
+  "csvc" -> "ssvc" [label="Sync di secret /\ndirectory / DNS\n(F-14..F-16)", color="#b25354", style="dashed"];
+  "sobserv" -> "cobserv" [label="Query di flotta,\nprobe, heartbeat\n(F-07, F-10, F-12)", color="#b25354", style="dashed"];
+  "smanagement" -> "cgit" [label="MR di Backstage +\nrunner di South\n(F-17, F-18)", color="#b25354", style="dashed"];
+  "cobserv" -> "sobserv" [label="Query di flotta,\nprobe, heartbeat\n(F-06, F-10, F-12)", color="#b25354", style="dashed"];
+  "cobserv" -> "sss3" [label="Copia dei blocchi\ncapacity (F-05)", color="#b25354", style="dashed"];
+  "cgit" -> "sgeo" [label="Dati Geo\nCentral→South\n(flusso logico,\nF-01)", color="#b25354", style="dashed"];
+  "cdata" -> "sdata" [label="Replica DB (F-02)", color="#b25354", style="dashed"];
+  "cmanagement" -> "saudit" [label="Seconda copia di\naudit (F-11)", color="#b25354", style="dashed"];
+  "smanagement" -> "cmanagement" [label="Replica DB di\nBackstage verso lo\nstandby (F-22)", color="#b25354", style="dashed"];
+  "cmanagement" -> "smanagement" [label="Replica dello state\nOpenTofu (F-23)", color="#b25354", style="dashed"];
+  "smanagement" -> "nrestore" [label="Restore se si perde\nCentral (F-08)", color="#b25354", style="dashed"];
+  "smanagement" -> "ncold" [label="Backup di South\n(F-19)", color="#b25354", style="dashed"];
+}

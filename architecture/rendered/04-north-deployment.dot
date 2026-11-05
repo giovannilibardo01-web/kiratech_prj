@@ -1,0 +1,29 @@
+digraph G {
+  graph [fontname="Arial", bgcolor="white", labeljust=l, labelloc=t, fontsize=19, fontcolor="#18344e", pad=0.35, nodesep=0.65, ranksep=0.90, splines=polyline, overlap=false, concentrate=false, outputorder=edgesfirst];
+  graph [label=<Sito North: backup ed evidenze immutabili<BR/><FONT POINT-SIZE="12">Architettura proposta | non è un sistema in esercizio</FONT><BR/><FONT POINT-SIZE="10" COLOR="#496377">Notazione in stile C4 resa con Graphviz (non Structurizr). Riquadro: nome, [tipo C4: tecnologia] | sito, owner; nel file SVG la descrizione compare al passaggio del mouse.</FONT><BR/><FONT POINT-SIZE="10" COLOR="#496377">Freccia rossa tratteggiata: flusso tra siti attraverso i firewall di Network Security, con il relativo F-ID (docs/12).</FONT>>, rankdir=LR];
+  node [shape=box, style="rounded,filled", fontname="Arial"];
+  edge [fontname="Arial", fontsize=8.5, color="#60778c", fontcolor="#526478", arrowsize=0.67, penwidth=1.3];
+  subgraph cluster_0 {
+    label="North: gestito in modo indipendente"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "ncold" [label="Archivio immutabile di North\n(audit + backup)\n[Nodo di deployment: Compatibile\nS3, Object Lock in compliance\nmode] | North\nOwner: Data Engineering (storage);\nadmin della retention designato\ndal CISO", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Backup immutabili versionati e archivio di audit a 400 giorni; amministrato separatamente (ADR 0010)."];
+    "nrestore" [label="Endpoint di restore di North\n+ escrow delle chiavi\n[Nodo di deployment: Servizio di\nrestore + escrow delle chiavi] |\nNorth\nOwner: Data Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Ripristina i backup versionati quando si perde Central."];
+    "nverifier" [label="Verificatore di integrità\nindipendente\n[Nodo di deployment: Verificatore\ndi integrità] | North\nOwner: Designato dal CISO, esterno\nagli admin di piattaforma", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Controlli giornalieri di hash, catena dei manifest e sequenza."];
+  }
+  subgraph cluster_1 {
+    label="Central: sorgenti remote"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "cmanagement" [label="Management cluster\nKubernetes di Central\n[Nodo di deployment: CAPI/CAPV,\nFlux, runner OpenTofu, relay di\naudit, Backstage in standby] |\nCentral\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Gestisce solo i cluster di Central tramite il vCenter di Central."];
+    "cgit" [label="GitLab primario di Central +\nregistry\n[Nodo di deployment: GitLab\nUltimate primario + registry] |\nCentral\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Git e CI di riferimento nel funzionamento normale."];
+  }
+  subgraph cluster_2 {
+    label="South: sorgenti remote e ripristino"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "smanagement" [label="Management cluster\nKubernetes di South\n[Nodo di deployment: CAPI/CAPV,\nFlux, runner OpenTofu, relay di\naudit, Backstage primario] | South\nOwner: Platform Engineering", fillcolor="#edf3e8", color="#63834c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Gestisce solo i cluster di South tramite il vCenter di South."];
+  }
+  "cmanagement" -> "ncold" [label="Backup: etcd,\nVelero, state (F-03)", color="#b25354", style="dashed"];
+  "cmanagement" -> "ncold" [label="Relay di audit\n(F-04)", color="#b25354", style="dashed"];
+  "nverifier" -> "ncold" [label="Verifica di hash e\nretention", color="#60778c", style="solid"];
+  "nrestore" -> "ncold" [label="Legge i punti di\nripristino\nversionati", color="#60778c", style="solid"];
+  "smanagement" -> "nrestore" [label="Restore se si perde\nCentral (F-08)", color="#b25354", style="dashed"];
+  "smanagement" -> "ncold" [label="Relay di audit\n(F-04)", color="#b25354", style="dashed"];
+  "cgit" -> "ncold" [label="Backup GitLab (F-03)", color="#b25354", style="dashed"];
+  "smanagement" -> "ncold" [label="Backup di South\n(F-19)", color="#b25354", style="dashed"];
+}

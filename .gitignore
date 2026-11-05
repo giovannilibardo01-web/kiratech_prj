@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfplan
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.yaml
+*.kubeconfig
+*.log

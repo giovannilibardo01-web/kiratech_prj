@@ -1,0 +1,1588 @@
+{
+  "metadata": {
+    "name": "Modello in stile C4 della Internal Developer Platform su tre siti",
+    "status": "Proposta: esercizio di progettazione, non validato in produzione",
+    "date": "2026-11-05",
+    "notes": "Registro canonico unico di nodi e relazioni. Ogni vista seleziona gli ID; render_diagrams.py genera DOT, SVG e PNG. Notazione in stile C4 resa con Graphviz (non Structurizr). Le relazioni tra siti riportano l'F-ID di docs/12-firewall-flows.md."
+  },
+  "nodes": {
+    "dev": {
+      "name": "Sviluppatori di business",
+      "type": "Person",
+      "site": "",
+      "group": "",
+      "description": "Team di business che richiedono e usano ambienti di sviluppo e test."
+    },
+    "ops": {
+      "name": "Operations e sicurezza",
+      "type": "Person",
+      "site": "",
+      "group": "",
+      "description": "Personale operations e sicurezza dei quattro team del cliente; oggi si affida ai check black-box."
+    },
+    "vm": {
+      "name": "Parco VMware",
+      "type": "External System",
+      "site": "multi",
+      "group": "Existing",
+      "description": "Parco hypervisor sui tre siti; topologia vCenter per sito da confermare (Q-14).",
+      "technology": "VMware vSphere",
+      "owner": "owner VMware del cliente"
+    },
+    "oldk8s": {
+      "name": "Cluster Kubernetes creati a mano",
+      "type": "Software System",
+      "site": "multi",
+      "group": "Existing",
+      "description": "Cluster creati a mano senza una baseline comune; collocazione e versioni da censire (Q-03).",
+      "technology": "Kubernetes, versioni miste",
+      "owner": "Vari team del cliente"
+    },
+    "git-single": {
+      "name": "GitLab self-managed a istanza singola",
+      "type": "Software System",
+      "site": "central",
+      "group": "Existing",
+      "description": "Istanza singola in Central; oggi senza Geo.",
+      "technology": "GitLab Ultimate, self-managed",
+      "owner": "Platform Engineering"
+    },
+    "oldmonitor": {
+      "name": "Monitor ping / HTTP legacy",
+      "type": "Software System",
+      "site": "unknown",
+      "group": "Existing",
+      "description": "Check black-box che non si possono spegnere da un giorno all'altro; collocazione ignota (Q-13).",
+      "technology": "Strumento ping/HTTP legacy",
+      "owner": "SRE"
+    },
+    "north-old": {
+      "name": "Servizio di backup off-site",
+      "type": "Software System",
+      "site": "north",
+      "group": "Existing",
+      "description": "Sito di backup off-site.",
+      "technology": "Servizio di backup, prodotto ignoto",
+      "owner": "Data Engineering"
+    },
+    "south-old": {
+      "name": "Workload non di produzione",
+      "type": "Software System",
+      "site": "south",
+      "group": "Existing",
+      "description": "Sito di deployment secondario, di norma non di produzione."
+    },
+    "central-old": {
+      "name": "Produzione critica per il business",
+      "type": "Software System",
+      "site": "central",
+      "group": "Existing",
+      "description": "Hosting della produzione critica per il business."
+    },
+    "ref-app": {
+      "name": "App di riferimento three-tier + LGTM locale (in corso)",
+      "type": "Software System",
+      "site": "unknown",
+      "group": "Existing",
+      "description": "Attività sull'applicazione di riferimento three-tier.",
+      "technology": "Prometheus, Loki, Grafana, Alloy su un solo cluster",
+      "owner": "Ingegnere Kiratech"
+    },
+    "golden-existing": {
+      "name": "Golden path dei namespace in South (in corso)",
+      "type": "Software System",
+      "site": "south",
+      "group": "Existing",
+      "description": "Attività sul golden path dei namespace in South.",
+      "technology": "RBAC, quote, default-deny, PSS, policy engine, external secrets, GitLab CI",
+      "owner": "Ingegnere senior Kiratech"
+    },
+    "idp": {
+      "name": "Internal Developer Platform",
+      "type": "Software System",
+      "site": "multi",
+      "group": "",
+      "description": "Piattaforma self-service su Central e South.",
+      "technology": "Backstage, GitLab, OpenTofu, CAPV, Flux, Kyverno, ESO",
+      "owner": "Platform Engineering"
+    },
+    "gitlab": {
+      "name": "GitLab Ultimate primario + Geo",
+      "type": "Software System",
+      "site": "central/south",
+      "group": "",
+      "description": "SCM, CI, registry e policy di sicurezza.",
+      "technology": "GitLab Ultimate primario (Central) + Geo secondario (South)",
+      "owner": "Platform Engineering"
+    },
+    "onprem": {
+      "name": "Flotta VMware e Kubernetes",
+      "type": "Software System",
+      "site": "central/south",
+      "group": "",
+      "description": "Control plane indipendenti per sito; nessun etcd tra siti.",
+      "technology": "VMware vSphere + Kubernetes, 30 cluster",
+      "owner": "Platform Engineering"
+    },
+    "obs": {
+      "name": "Osservabilità LGTM per sito attivo",
+      "type": "Software System",
+      "site": "central/south",
+      "group": "",
+      "description": "Metriche, log, trace e alerting locali al sito.",
+      "technology": "Grafana LGTM per sito attivo",
+      "owner": "SRE"
+    },
+    "audit": {
+      "name": "Backup e archivio di audit immutabile",
+      "type": "Software System",
+      "site": "north",
+      "group": "",
+      "description": "Backup e archivio di audit immutabile in North; seconda copia di audit in South (ADR 0010).",
+      "technology": "Compatibile S3, Object Lock in compliance mode",
+      "owner": "Data Engineering (storage); admin della retention designato dal CISO"
+    },
+    "security": {
+      "name": "IAM / PKI / secret manager aziendali",
+      "type": "External System",
+      "site": "multi",
+      "group": "",
+      "description": "Servizi abilitanti istanziati in Central e South (ADR 0011).",
+      "technology": "IdP, PKI, secret manager, HSM/KMS per sito",
+      "owner": "Network Security"
+    },
+    "data": {
+      "name": "Servizi dati SQL / NoSQL",
+      "type": "External System",
+      "site": "central/south",
+      "group": "",
+      "description": "Servizi dati di produzione; repliche in South per il DR.",
+      "technology": "SQL/NoSQL con replica tra siti",
+      "owner": "Data Engineering"
+    },
+    "firewall": {
+      "name": "Firewall tra siti di Network Security",
+      "type": "External System",
+      "site": "multi",
+      "group": "",
+      "description": "Tutto il traffico tra siti; flussi dichiarati esplicitamente (docs/12).",
+      "technology": "Firewall di Network Security",
+      "owner": "Network Security"
+    },
+    "backstage": {
+      "name": "Catalogo Backstage",
+      "type": "Container",
+      "site": "south (primary) / central (standby)",
+      "group": "",
+      "description": "Catalogo e template; apre solo merge request, nessun accesso ai cluster.",
+      "technology": "Backstage",
+      "owner": "Platform Engineering"
+    },
+    "ci": {
+      "name": "CI protetta / registry GitLab",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "Validazione iniettata, scansioni, SBOM, firma.",
+      "technology": "GitLab CI, runner protetti, policy di sicurezza",
+      "owner": "Platform Engineering"
+    },
+    "iac": {
+      "name": "OpenTofu e state protetto",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "Primitive infrastrutturali e bootstrap dei cluster.",
+      "technology": "OpenTofu, remote state versionato",
+      "owner": "Platform Engineering"
+    },
+    "capi": {
+      "name": "Controller CAPI + CAPV",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "Ciclo di vita dei cluster sul vCenter locale del sito.",
+      "technology": "Cluster API + CAPV",
+      "owner": "Platform Engineering"
+    },
+    "flux": {
+      "name": "GitOps Flux per cluster",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "Riconciliazione pull-based; i tenant impersonano account limitati al namespace.",
+      "technology": "Flux, multi-tenancy lockdown",
+      "owner": "Platform Engineering"
+    },
+    "policy": {
+      "name": "Kyverno / PSS / RBAC / CNI",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "Enforcement in admission e report delle policy.",
+      "technology": "Kyverno, PSS, RBAC, NetworkPolicy",
+      "owner": "Platform Engineering (il CISO approva le policy)"
+    },
+    "secrets": {
+      "name": "Integrazione External Secrets",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "Store per namespace che leggono il secret manager del sito.",
+      "technology": "External Secrets Operator",
+      "owner": "Platform Engineering"
+    },
+    "telemetry": {
+      "name": "Collector Alloy locali",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "Collector gestiti dalla piattaforma; tenant ricavato dai metadati Kubernetes.",
+      "technology": "Grafana Alloy",
+      "owner": "SRE"
+    },
+    "lgtm": {
+      "name": "Mimir / Loki / Tempo / Grafana",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "Data plane di osservabilità per sito.",
+      "technology": "Mimir, Loki, Tempo, Grafana",
+      "owner": "SRE"
+    },
+    "auditrelay": {
+      "name": "Relay di audit (con ACK)",
+      "type": "Component",
+      "site": "central/south",
+      "group": "",
+      "description": "Separato dall'ingest LGTM; numeri di sequenza, conferma di ricezione e manifest di hash.",
+      "technology": "Relay dedicato con spool su disco",
+      "owner": "SRE"
+    },
+    "runbooks": {
+      "name": "SLO / Alertmanager / runbook",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "Alert sugli SLO instradati ai quattro team.",
+      "technology": "Ruler, Alertmanager, runbook",
+      "owner": "SRE"
+    },
+    "ncold": {
+      "name": "Archivio immutabile di North (audit + backup)",
+      "type": "Deployment Node",
+      "site": "north",
+      "group": "",
+      "description": "Backup immutabili versionati e archivio di audit a 400 giorni; amministrato separatamente (ADR 0010).",
+      "technology": "Compatibile S3, Object Lock in compliance mode",
+      "owner": "Data Engineering (storage); admin della retention designato dal CISO"
+    },
+    "nrestore": {
+      "name": "Endpoint di restore di North + escrow delle chiavi",
+      "type": "Deployment Node",
+      "site": "north",
+      "group": "",
+      "description": "Ripristina i backup versionati quando si perde Central.",
+      "technology": "Servizio di restore + escrow delle chiavi",
+      "owner": "Data Engineering"
+    },
+    "nverifier": {
+      "name": "Verificatore di integrità indipendente",
+      "type": "Deployment Node",
+      "site": "north",
+      "group": "",
+      "description": "Controlli giornalieri di hash, catena dei manifest e sequenza.",
+      "technology": "Verificatore di integrità",
+      "owner": "Designato dal CISO, esterno agli admin di piattaforma"
+    },
+    "cmanagement": {
+      "name": "Management cluster Kubernetes di Central",
+      "type": "Deployment Node",
+      "site": "central",
+      "group": "",
+      "description": "Gestisce solo i cluster di Central tramite il vCenter di Central.",
+      "technology": "CAPI/CAPV, Flux, runner OpenTofu, relay di audit, Backstage in standby",
+      "owner": "Platform Engineering"
+    },
+    "cobserv": {
+      "name": "Cluster Kubernetes di osservabilità di Central",
+      "type": "Deployment Node",
+      "site": "central",
+      "group": "",
+      "description": "Cluster di osservabilità di Central.",
+      "technology": "Mimir, Loki, Tempo, Grafana, gateway, Alertmanager, metamonitoring",
+      "owner": "SRE"
+    },
+    "cprod": {
+      "name": "Central: 10 cluster Kubernetes di produzione",
+      "type": "Deployment Node",
+      "site": "central",
+      "group": "",
+      "description": "Dieci cluster di produzione per classe di rischio.",
+      "technology": "Kubernetes (CAPV), Alloy, Kyverno, ESO",
+      "owner": "Platform Engineering; workload in carico ai team applicativi"
+    },
+    "cgit": {
+      "name": "GitLab primario di Central + registry",
+      "type": "Deployment Node",
+      "site": "central",
+      "group": "",
+      "description": "Git e CI di riferimento nel funzionamento normale.",
+      "technology": "GitLab Ultimate primario + registry",
+      "owner": "Platform Engineering"
+    },
+    "cdata": {
+      "name": "Database di produzione di Central",
+      "type": "Deployment Node",
+      "site": "central",
+      "group": "",
+      "description": "Database di produzione.",
+      "technology": "Primari SQL/NoSQL",
+      "owner": "Data Engineering"
+    },
+    "css3": {
+      "name": "Storage S3 locale di osservabilità di Central",
+      "type": "Data Store",
+      "site": "central",
+      "group": "",
+      "description": "Object storage per l'LGTM di Central.",
+      "technology": "Compatibile S3, locale al sito",
+      "owner": "Data Engineering"
+    },
+    "smanagement": {
+      "name": "Management cluster Kubernetes di South",
+      "type": "Deployment Node",
+      "site": "south",
+      "group": "",
+      "description": "Gestisce solo i cluster di South tramite il vCenter di South.",
+      "technology": "CAPI/CAPV, Flux, runner OpenTofu, relay di audit, Backstage primario",
+      "owner": "Platform Engineering"
+    },
+    "sobserv": {
+      "name": "Cluster Kubernetes di osservabilità di South",
+      "type": "Deployment Node",
+      "site": "south",
+      "group": "",
+      "description": "Cluster di osservabilità di South; assorbe la telemetria della produzione ripristinata.",
+      "technology": "Mimir, Loki, Tempo, Grafana, gateway, Alertmanager, metamonitoring",
+      "owner": "SRE"
+    },
+    "sdr": {
+      "name": "South: 10 cluster Kubernetes DR caldi",
+      "type": "Deployment Node",
+      "site": "south",
+      "group": "",
+      "description": "Dieci controparti DR calde con capacità riservata.",
+      "technology": "Kubernetes (CAPV), overlay DR: repliche 0, sospeso",
+      "owner": "Platform Engineering"
+    },
+    "snonprod": {
+      "name": "South: 6 cluster non di produzione",
+      "type": "Deployment Node",
+      "site": "south",
+      "group": "",
+      "description": "Cluster dev/test condivisi; soggetti a preemption sotto pressione DR.",
+      "technology": "Kubernetes (CAPV), namespace golden path",
+      "owner": "Platform Engineering"
+    },
+    "sgeo": {
+      "name": "GitLab Geo secondario di South + artefatti del registry",
+      "type": "Deployment Node",
+      "site": "south",
+      "group": "",
+      "description": "In sola lettura fino alla promozione.",
+      "technology": "GitLab Geo secondario, replica del registry configurata",
+      "owner": "Platform Engineering"
+    },
+    "sdata": {
+      "name": "Repliche database di South / promozione",
+      "type": "Deployment Node",
+      "site": "south",
+      "group": "",
+      "description": "Replicate in continuo; promosse dopo il fencing.",
+      "technology": "Repliche SQL/NoSQL",
+      "owner": "Data Engineering"
+    },
+    "sss3": {
+      "name": "Storage S3 locale di osservabilità di South",
+      "type": "Data Store",
+      "site": "south",
+      "group": "",
+      "description": "Object storage per l'LGTM di South e per lo storico di capacità copiato.",
+      "technology": "Compatibile S3, locale al sito, prefisso DR",
+      "owner": "Data Engineering"
+    },
+    "app": {
+      "name": "Workload e sorgenti Kubernetes",
+      "type": "Component",
+      "site": "",
+      "group": "",
+      "description": "Endpoint delle metriche, log dei container, span OTLP ed eventi di audit di ogni cluster del sito.",
+      "technology": "kubelet, kube-state-metrics, SDK OTel, audit di kube-apiserver",
+      "owner": "Team dei workload / Platform Eng."
+    },
+    "alloy": {
+      "name": "Collector Alloy (della piattaforma)",
+      "type": "Component",
+      "site": "",
+      "group": "",
+      "description": "Ricava il namespace dai metadati Kubernetes, associa il namespace al tenant tramite il registry, bufferizza le metriche nel WAL.",
+      "technology": "Grafana Alloy (DaemonSet + collector di cluster)",
+      "owner": "SRE"
+    },
+    "gateway": {
+      "name": "Telemetry gateway (scrittura)",
+      "type": "Component",
+      "site": "",
+      "group": "",
+      "description": "Autentica i certificati per cluster, accetta le coppie (cluster, tenant) elencate nel registry, rimuove gli header di tenant inviati dal client, applica i limiti.",
+      "technology": "Reverse proxy mTLS",
+      "owner": "SRE"
+    },
+    "mimir": {
+      "name": "Mimir distributor / ingester / querier",
+      "type": "Component",
+      "site": "",
+      "group": "",
+      "description": "Metriche dei tenant t-<team>, platform (30 giorni) e capacity (395 giorni).",
+      "technology": "Grafana Mimir 3.x ingest storage",
+      "owner": "SRE"
+    },
+    "loki": {
+      "name": "Loki distributor / ingester / querier / compactor",
+      "type": "Component",
+      "site": "",
+      "group": "",
+      "description": "Log operativi a 30 giorni per tenant; il tenant security è una copia ricercabile a 30 giorni, non il registro di audit.",
+      "technology": "Grafana Loki 3.x",
+      "owner": "SRE"
+    },
+    "tempo": {
+      "name": "Tempo distributor / block-builder / live-store",
+      "type": "Component",
+      "site": "",
+      "group": "",
+      "description": "Trace a 7 giorni per tenant, campionamento esplicito.",
+      "technology": "Grafana Tempo 3.x a microservizi",
+      "owner": "SRE"
+    },
+    "grafana": {
+      "name": "Grafana (un'organizzazione per team)",
+      "type": "Component",
+      "site": "",
+      "group": "",
+      "description": "Dashboard ed Explore; i data source inoltrano il token OIDC dell'utente al query gateway.",
+      "technology": "Grafana OSS, provisioning da Git",
+      "owner": "SRE"
+    },
+    "alert": {
+      "name": "Ruler + Alertmanager",
+      "type": "Component",
+      "site": "",
+      "group": "",
+      "description": "Regole per tenant di recording, burn rate degli SLO e capacità federata; instradamento ai quattro team.",
+      "technology": "Ruler Mimir/Loki, Alertmanager replicato",
+      "owner": "SRE"
+    },
+    "bucket": {
+      "name": "Object storage (un bucket per segnale)",
+      "type": "Data Store",
+      "site": "",
+      "group": "",
+      "description": "Blocchi, chunk e stato dei ruler; almeno tre fault domain di storage.",
+      "technology": "Compatibile S3, locale al sito",
+      "owner": "Data Engineering"
+    },
+    "caches": {
+      "name": "Cache di query / indice / chunk",
+      "type": "Data Store",
+      "site": "",
+      "group": "",
+      "description": "Solo prestazioni; la perdita rallenta le query.",
+      "technology": "Memcached",
+      "owner": "SRE"
+    },
+    "auditarch": {
+      "name": "Archivio di audit immutabile di North",
+      "type": "Data Store",
+      "site": "",
+      "group": "",
+      "description": "Archivio a 400 giorni degli eventi di audit di piattaforma e Kubernetes, con manifest di integrità.",
+      "technology": "Compatibile S3 con Object Lock",
+      "owner": "Data Engineering (storage); admin della retention designato dal CISO"
+    },
+    "meta": {
+      "name": "Metamonitoring tra siti",
+      "type": "Component",
+      "site": "",
+      "group": "",
+      "description": "Raccoglie via F-10 lo stato di salute dell'LGTM di questo sito e verifica la freschezza dei canary.",
+      "technology": "Prometheus nell'altro sito + black-box legacy",
+      "owner": "SRE"
+    },
+    "dbmeta": {
+      "name": "Database dei metadati Grafana",
+      "type": "Data Store",
+      "site": "",
+      "group": "",
+      "description": "Utenti, organizzazioni e preferenze; le dashboard si ricreano da Git con il provisioning.",
+      "technology": "PostgreSQL HA",
+      "owner": "Data Engineering"
+    },
+    "team": {
+      "name": "Team in reperibilità (SRE, Platform, Data, Network Security)",
+      "type": "Person",
+      "site": "",
+      "group": "",
+      "description": "Ricevono paging e ticket con i runbook."
+    },
+    "querygw": {
+      "site": "",
+      "group": "",
+      "name": "Query gateway (lettura)",
+      "type": "Component",
+      "description": "Valida il token inoltrato, associa i gruppi dell'IdP ai tenant consentiti, imposta X-Scope-OrgID, registra ogni query.",
+      "technology": "Reverse proxy con validazione OIDC",
+      "owner": "SRE"
+    },
+    "broker": {
+      "site": "",
+      "group": "",
+      "name": "Broker di ingest",
+      "type": "Data Store",
+      "description": "Percorso di scrittura durevole per l'ingest storage di Mimir e i microservizi di Tempo.",
+      "technology": "Compatibile Kafka, 3 broker RF3",
+      "owner": "Data Engineering"
+    },
+    "pv": {
+      "site": "",
+      "group": "",
+      "name": "Volumi persistenti",
+      "type": "Data Store",
+      "description": "Dischi di ingester e store-gateway, WAL di Loki, WAL dei collector e spool di audit.",
+      "technology": "Storage class CSI del sito",
+      "owner": "Platform Engineering"
+    },
+    "oidc": {
+      "site": "",
+      "group": "",
+      "name": "IdP e PKI locali al sito",
+      "type": "External System",
+      "description": "Login utente, validazione dei token e certificati dei collector senza Central.",
+      "technology": "OIDC + CA per sito",
+      "owner": "Network Security"
+    },
+    "deadman": {
+      "site": "",
+      "group": "",
+      "name": "Ricevitore dead-man's switch (altro sito)",
+      "type": "Component",
+      "description": "Chiama il reperibile SRE quando si interrompe l'heartbeat Watchdog di questo sito.",
+      "technology": "Ricevitore di heartbeat + canale di notifica separato",
+      "owner": "SRE"
+    },
+    "saudit": {
+      "name": "Copia di audit immutabile di South",
+      "type": "Data Store",
+      "site": "south",
+      "group": "",
+      "description": "Secondo archivio di audit a 400 giorni, perché le evidenze sopravvivano alla perdita di North o di Central (ADR 0010).",
+      "technology": "Compatibile S3, Object Lock in compliance mode",
+      "owner": "Data Engineering (storage); admin della retention designato dal CISO"
+    },
+    "csvc": {
+      "name": "Servizi di sito di Central",
+      "type": "Deployment Node",
+      "site": "central",
+      "group": "",
+      "description": "Istanze Central dei servizi abilitanti, sincronizzate verso South.",
+      "technology": "IdP, CA emittente, secret manager, HSM/KMS, DNS, NTP",
+      "owner": "Network Security"
+    },
+    "ssvc": {
+      "name": "Servizi di sito di South (attivi prima del disastro)",
+      "type": "Deployment Node",
+      "site": "south",
+      "group": "",
+      "description": "Servono South e la produzione ripristinata senza Central (ADR 0011).",
+      "technology": "Istanza IdP, CA emittente, secret manager, HSM/KMS, DNS secondari, NTP",
+      "owner": "Network Security"
+    },
+    "svcenter": {
+      "name": "vCenter di South (indipendente)",
+      "type": "Deployment Node",
+      "site": "south",
+      "group": "",
+      "description": "Destinazione del CAPV di South; capacità riservata ai worker pool DR.",
+      "technology": "VMware vCenter, identità solo South",
+      "owner": "Platform Engineering (con l'owner VMware)"
+    },
+    "sreg": {
+      "name": "Registry OCI di South",
+      "type": "Deployment Node",
+      "site": "south",
+      "group": "",
+      "description": "Contiene ogni release di produzione, così il DR non richiede GitLab (ADR 0007).",
+      "technology": "Registry OCI: immagini di release, attestazioni, artefatti OCI Flux firmati",
+      "owner": "Platform Engineering"
+    },
+    "kapi": {
+      "name": "API server Kubernetes",
+      "type": "Container",
+      "site": "central/south",
+      "group": "",
+      "description": "In ogni cluster; origine degli eventi di audit Kubernetes e chiamante dei webhook di admission.",
+      "technology": "kube-apiserver",
+      "owner": "Platform Engineering"
+    }
+  },
+  "relationships": {
+    "e1": {
+      "from": "dev",
+      "to": "oldk8s",
+      "label": "Richieste manuali"
+    },
+    "e2": {
+      "from": "ops",
+      "to": "oldmonitor",
+      "label": "Controlla gli alert"
+    },
+    "e3": {
+      "from": "oldmonitor",
+      "to": "central-old",
+      "label": "Ping/HTTP"
+    },
+    "e4": {
+      "from": "oldmonitor",
+      "to": "south-old",
+      "label": "Ping/HTTP"
+    },
+    "e5": {
+      "from": "git-single",
+      "to": "central-old",
+      "label": "Dipendenza attuale per sorgenti/release"
+    },
+    "e6": {
+      "from": "oldk8s",
+      "to": "vm",
+      "label": "Ospitati su"
+    },
+    "e7": {
+      "from": "central-old",
+      "to": "north-old",
+      "label": "Backup (dettagli ignoti)"
+    },
+    "e8": {
+      "from": "ref-app",
+      "to": "oldk8s",
+      "label": "Prova su un solo cluster"
+    },
+    "e9": {
+      "from": "golden-existing",
+      "to": "south-old",
+      "label": "Provisioning dei namespace"
+    },
+    "e10": {
+      "from": "oldk8s",
+      "to": "central-old",
+      "label": "Workload (collocazione ignota)"
+    },
+    "t1": {
+      "from": "dev",
+      "to": "idp",
+      "label": "Richiesta self-service"
+    },
+    "t2": {
+      "from": "ops",
+      "to": "obs",
+      "label": "SLO/alerting"
+    },
+    "t3": {
+      "from": "idp",
+      "to": "gitlab",
+      "label": "Richieste protette / CI"
+    },
+    "t4": {
+      "from": "gitlab",
+      "to": "onprem",
+      "label": "Stato desiderato GitOps firmato"
+    },
+    "t5": {
+      "from": "onprem",
+      "to": "obs",
+      "label": "Telemetria"
+    },
+    "t6": {
+      "from": "onprem",
+      "to": "data",
+      "label": "Dipendenze dai dati"
+    },
+    "t7": {
+      "from": "onprem",
+      "to": "audit",
+      "label": "Audit piattaforma/K8s via relay dedicato (non via LGTM)"
+    },
+    "t8": {
+      "from": "idp",
+      "to": "security",
+      "label": "OIDC/PKI/secret"
+    },
+    "t9": {
+      "from": "data",
+      "to": "audit",
+      "label": "Backup protetti"
+    },
+    "t10": {
+      "from": "gitlab",
+      "to": "firewall",
+      "label": "Replica Geo previa approvazione"
+    },
+    "t11": {
+      "from": "firewall",
+      "to": "audit",
+      "label": "Ogni flusso tra siti su regole approvate (docs/12)"
+    },
+    "k1": {
+      "from": "dev",
+      "to": "backstage",
+      "label": "Consulta/richiede"
+    },
+    "k2": {
+      "from": "backstage",
+      "to": "ci",
+      "label": "Apre MR protetta"
+    },
+    "k3": {
+      "from": "ci",
+      "to": "iac",
+      "label": "Pipeline approvata"
+    },
+    "k4": {
+      "from": "iac",
+      "to": "capi",
+      "label": "Crea le risorse dei cluster"
+    },
+    "k5": {
+      "from": "ci",
+      "to": "flux",
+      "label": "Stato desiderato approvato"
+    },
+    "k6": {
+      "from": "flux",
+      "to": "policy",
+      "label": "Riconcilia la baseline"
+    },
+    "k7": {
+      "from": "policy",
+      "to": "secrets",
+      "label": "Riferimenti circoscritti ai secret"
+    },
+    "k8": {
+      "from": "flux",
+      "to": "telemetry",
+      "label": "Distribuisce collector + registry dei tenant"
+    },
+    "k9": {
+      "from": "telemetry",
+      "to": "lgtm",
+      "label": "Ingest locale protetto"
+    },
+    "k10": {
+      "from": "lgtm",
+      "to": "runbooks",
+      "label": "SLI e alert"
+    },
+    "k11": {
+      "from": "auditrelay",
+      "to": "audit",
+      "label": "Audit in append (WORM)"
+    },
+    "k12": {
+      "from": "policy",
+      "to": "auditrelay",
+      "label": "Decisioni di admission / report delle policy"
+    },
+    "k13": {
+      "from": "backstage",
+      "to": "security",
+      "label": "Mappatura dei gruppi OIDC"
+    },
+    "k14": {
+      "from": "ci",
+      "to": "gitlab",
+      "label": "Funzioni native di GitLab"
+    },
+    "n1": {
+      "from": "cmanagement",
+      "to": "ncold",
+      "label": "Backup: etcd, Velero, state (F-03)"
+    },
+    "n2": {
+      "from": "cmanagement",
+      "to": "ncold",
+      "label": "Relay di audit (F-04)"
+    },
+    "n3": {
+      "from": "nverifier",
+      "to": "ncold",
+      "label": "Verifica di hash e retention"
+    },
+    "n4": {
+      "from": "nrestore",
+      "to": "ncold",
+      "label": "Legge i punti di ripristino versionati"
+    },
+    "n5": {
+      "from": "smanagement",
+      "to": "nrestore",
+      "label": "Restore se si perde Central (F-08)"
+    },
+    "n6": {
+      "from": "smanagement",
+      "to": "ncold",
+      "label": "Relay di audit (F-04)"
+    },
+    "n7": {
+      "from": "cgit",
+      "to": "ncold",
+      "label": "Backup GitLab (F-03)"
+    },
+    "c1": {
+      "from": "cmanagement",
+      "to": "cprod",
+      "label": "CAPI / GitOps"
+    },
+    "c2": {
+      "from": "cprod",
+      "to": "cobserv",
+      "label": "Ingest Alloy locale"
+    },
+    "c3": {
+      "from": "cobserv",
+      "to": "css3",
+      "label": "Operazioni su object storage locale"
+    },
+    "c4": {
+      "from": "cgit",
+      "to": "sgeo",
+      "label": "Dati Geo Central→South (flusso logico, F-01)"
+    },
+    "c5": {
+      "from": "cdata",
+      "to": "sdata",
+      "label": "Replica DB (F-02)"
+    },
+    "c7": {
+      "from": "cprod",
+      "to": "cdata",
+      "label": "SQL/NoSQL di produzione"
+    },
+    "c8": {
+      "from": "cgit",
+      "to": "cmanagement",
+      "label": "CI protetta / riconciliazione"
+    },
+    "s1": {
+      "from": "smanagement",
+      "to": "sdr",
+      "label": "Prepara / promuove dopo il fencing"
+    },
+    "s2": {
+      "from": "smanagement",
+      "to": "snonprod",
+      "label": "Catalogo / GitOps"
+    },
+    "s3": {
+      "from": "sdr",
+      "to": "sobserv",
+      "label": "Telemetria locale dopo il failover"
+    },
+    "s4": {
+      "from": "snonprod",
+      "to": "sobserv",
+      "label": "Telemetria locale al sito"
+    },
+    "s5": {
+      "from": "sobserv",
+      "to": "sss3",
+      "label": "Operazioni su object storage locale"
+    },
+    "s6": {
+      "from": "sgeo",
+      "to": "smanagement",
+      "label": "GitLab locale dopo la promozione"
+    },
+    "s7": {
+      "from": "sdata",
+      "to": "sdr",
+      "label": "Workload stateful ripristinati"
+    },
+    "s8": {
+      "from": "sgeo",
+      "to": "cgit",
+      "label": "Geo: South avvia DB 5432 / HTTPS (F-01)"
+    },
+    "o1": {
+      "from": "app",
+      "to": "alloy",
+      "label": "Scrape / tail dei log / OTLP; namespace risolto dal collector"
+    },
+    "o2": {
+      "from": "alloy",
+      "to": "gateway",
+      "label": "mTLS con cert per cluster; stream per tenant; WAL"
+    },
+    "o3": {
+      "from": "gateway",
+      "to": "mimir",
+      "label": "Remote-write; tenant impostato dal gateway"
+    },
+    "o4": {
+      "from": "gateway",
+      "to": "loki",
+      "label": "Push dei log; tenant impostato dal gateway"
+    },
+    "o5": {
+      "from": "gateway",
+      "to": "tempo",
+      "label": "OTLP; tenant impostato dal gateway"
+    },
+    "o6": {
+      "from": "mimir",
+      "to": "bucket",
+      "label": "Blocchi TSDB: tenant 30 gg, capacity 395 gg"
+    },
+    "o7": {
+      "from": "loki",
+      "to": "bucket",
+      "label": "Chunk + indice TSDB: 30 gg"
+    },
+    "o8": {
+      "from": "tempo",
+      "to": "bucket",
+      "label": "Blocchi Parquet: 7 gg"
+    },
+    "o9": {
+      "from": "mimir",
+      "to": "caches",
+      "label": "Cache di query / indice / chunk"
+    },
+    "o10": {
+      "from": "loki",
+      "to": "caches",
+      "label": "Cache di query / chunk"
+    },
+    "o11": {
+      "from": "grafana",
+      "to": "querygw",
+      "label": "Query + token OIDC inoltrato"
+    },
+    "o12": {
+      "from": "querygw",
+      "to": "mimir",
+      "label": "PromQL limitato al tenant"
+    },
+    "o13": {
+      "from": "querygw",
+      "to": "loki",
+      "label": "LogQL limitato al tenant"
+    },
+    "o14": {
+      "from": "mimir",
+      "to": "alert",
+      "label": "Valutazione delle regole per tenant"
+    },
+    "o15": {
+      "from": "alert",
+      "to": "team",
+      "label": "Paging / ticket + runbook"
+    },
+    "o16": {
+      "from": "app",
+      "to": "auditrelay",
+      "label": "Audit API K8s / GitLab / vault (percorso separato)"
+    },
+    "o17": {
+      "from": "meta",
+      "to": "gateway",
+      "label": "Freschezza canary + probe di salute (F-10)"
+    },
+    "o18": {
+      "from": "meta",
+      "to": "team",
+      "label": "Paging indipendente, canale separato"
+    },
+    "o19": {
+      "from": "grafana",
+      "to": "dbmeta",
+      "label": "Utenti, organizzazioni, preferenze"
+    },
+    "o20": {
+      "from": "auditrelay",
+      "to": "auditarch",
+      "label": "ACK + manifest di hash (F-04)"
+    },
+    "o21": {
+      "from": "mimir",
+      "to": "broker",
+      "label": "Partizioni dell'ingest storage"
+    },
+    "o22": {
+      "from": "tempo",
+      "to": "broker",
+      "label": "Percorso di scrittura delle trace"
+    },
+    "o23": {
+      "from": "querygw",
+      "to": "tempo",
+      "label": "TraceQL limitato al tenant"
+    },
+    "o24": {
+      "from": "querygw",
+      "to": "oidc",
+      "label": "Validazione del token"
+    },
+    "o25": {
+      "from": "grafana",
+      "to": "oidc",
+      "label": "Login utente (OIDC)"
+    },
+    "o26": {
+      "from": "alert",
+      "to": "deadman",
+      "label": "Heartbeat Watchdog"
+    },
+    "o27": {
+      "from": "deadman",
+      "to": "team",
+      "label": "Paging se l'heartbeat si ferma"
+    },
+    "o28": {
+      "from": "mimir",
+      "to": "pv",
+      "label": "Dischi ingester / store-gateway"
+    },
+    "o29": {
+      "from": "loki",
+      "to": "pv",
+      "label": "WAL / dischi ingester"
+    },
+    "c9": {
+      "from": "cmanagement",
+      "to": "saudit",
+      "label": "Seconda copia di audit (F-11)"
+    },
+    "s10": {
+      "from": "smanagement",
+      "to": "saudit",
+      "label": "Copia di audit locale"
+    },
+    "c10": {
+      "from": "cgit",
+      "to": "sreg",
+      "label": "Copia delle release: immagini + artefatti OCI (F-13)"
+    },
+    "c11": {
+      "from": "csvc",
+      "to": "ssvc",
+      "label": "Sync di secret / directory / DNS (F-14..F-16)"
+    },
+    "s11": {
+      "from": "smanagement",
+      "to": "svcenter",
+      "label": "Provisioning CAPV (identità South)"
+    },
+    "s12": {
+      "from": "sdr",
+      "to": "sreg",
+      "label": "Pull di immagini firmate + stato desiderato OCI Flux"
+    },
+    "s13": {
+      "from": "sdr",
+      "to": "ssvc",
+      "label": "OIDC, certificati, secret, DNS"
+    },
+    "k15": {
+      "from": "kapi",
+      "to": "auditrelay",
+      "label": "Log di audit API (shipper)"
+    },
+    "k16": {
+      "from": "kapi",
+      "to": "policy",
+      "label": "Chiamate ai webhook di admission"
+    },
+    "n8": {
+      "from": "smanagement",
+      "to": "ncold",
+      "label": "Backup di South (F-19)"
+    },
+    "c12": {
+      "from": "cobserv",
+      "to": "sobserv",
+      "label": "Query di flotta, probe, heartbeat (F-06, F-10, F-12)"
+    },
+    "c13": {
+      "from": "cobserv",
+      "to": "sss3",
+      "label": "Copia dei blocchi capacity (F-05)"
+    },
+    "s14": {
+      "from": "sobserv",
+      "to": "cobserv",
+      "label": "Query di flotta, probe, heartbeat (F-07, F-10, F-12)"
+    },
+    "s15": {
+      "from": "smanagement",
+      "to": "cgit",
+      "label": "MR di Backstage + runner di South (F-17, F-18)"
+    },
+    "f22": {
+      "from": "smanagement",
+      "to": "cmanagement",
+      "label": "Replica DB di Backstage verso lo standby (F-22)"
+    },
+    "f23": {
+      "from": "cmanagement",
+      "to": "smanagement",
+      "label": "Replica dello state OpenTofu (F-23)"
+    }
+  },
+  "views": {
+    "01-existing-landscape": {
+      "title": "Panorama dei sistemi attuale: noto e non noto",
+      "c4_level": "System Landscape",
+      "direction": "LR",
+      "nodes": [
+        "dev",
+        "ops",
+        "vm",
+        "oldk8s",
+        "git-single",
+        "oldmonitor",
+        "north-old",
+        "south-old",
+        "central-old",
+        "ref-app",
+        "golden-existing"
+      ],
+      "relationships": [
+        "e1",
+        "e2",
+        "e3",
+        "e4",
+        "e5",
+        "e6",
+        "e7",
+        "e8",
+        "e9",
+        "e10"
+      ],
+      "groups": {
+        "North (backup)": [
+          "north-old"
+        ],
+        "Central (produzione)": [
+          "git-single",
+          "central-old"
+        ],
+        "South (non produzione)": [
+          "south-old",
+          "golden-existing"
+        ],
+        "Parco / collocazione non verificata": [
+          "vm",
+          "oldk8s",
+          "oldmonitor",
+          "ref-app"
+        ]
+      }
+    },
+    "02-target-landscape": {
+      "title": "Panorama dei sistemi target: domini di guasto separati",
+      "c4_level": "System Landscape",
+      "direction": "LR",
+      "nodes": [
+        "dev",
+        "ops",
+        "idp",
+        "gitlab",
+        "onprem",
+        "obs",
+        "audit",
+        "security",
+        "data",
+        "firewall"
+      ],
+      "relationships": [
+        "t1",
+        "t2",
+        "t3",
+        "t4",
+        "t5",
+        "t6",
+        "t7",
+        "t8",
+        "t9",
+        "t10",
+        "t11"
+      ],
+      "groups": {
+        "Piattaforma multisito": [
+          "idp",
+          "onprem",
+          "obs",
+          "gitlab"
+        ],
+        "North: backup e archivio di audit (seconda copia di audit in South, ADR 0010)": [
+          "audit"
+        ],
+        "Dipendenze del cliente": [
+          "security",
+          "data",
+          "firewall"
+        ]
+      }
+    },
+    "03-idp-containers": {
+      "title": "Internal Developer Platform: container C4",
+      "c4_level": "Container",
+      "direction": "LR",
+      "nodes": [
+        "dev",
+        "backstage",
+        "ci",
+        "iac",
+        "capi",
+        "flux",
+        "policy",
+        "secrets",
+        "telemetry",
+        "lgtm",
+        "auditrelay",
+        "runbooks",
+        "security",
+        "audit",
+        "gitlab",
+        "kapi"
+      ],
+      "relationships": [
+        "k1",
+        "k2",
+        "k3",
+        "k4",
+        "k5",
+        "k6",
+        "k7",
+        "k8",
+        "k9",
+        "k10",
+        "k11",
+        "k12",
+        "k13",
+        "k14",
+        "k15",
+        "k16"
+      ],
+      "groups": {
+        "Esperienza utente": [
+          "backstage"
+        ],
+        "Gestione e delivery": [
+          "ci",
+          "iac",
+          "capi",
+          "flux"
+        ],
+        "Enforcement e tenant": [
+          "policy",
+          "secrets",
+          "kapi"
+        ],
+        "Telemetria ed evidenze": [
+          "telemetry",
+          "lgtm",
+          "auditrelay",
+          "runbooks"
+        ]
+      }
+    },
+    "04-north-deployment": {
+      "title": "Sito North: backup ed evidenze immutabili",
+      "c4_level": "Deployment",
+      "direction": "LR",
+      "nodes": [
+        "ncold",
+        "nrestore",
+        "nverifier",
+        "cmanagement",
+        "cgit",
+        "smanagement"
+      ],
+      "relationships": [
+        "n1",
+        "n2",
+        "n3",
+        "n4",
+        "n5",
+        "n6",
+        "n7",
+        "n8"
+      ],
+      "groups": {
+        "North: gestito in modo indipendente": [
+          "ncold",
+          "nrestore",
+          "nverifier"
+        ],
+        "Central: sorgenti remote": [
+          "cmanagement",
+          "cgit"
+        ],
+        "South: sorgenti remote e ripristino": [
+          "smanagement"
+        ]
+      },
+      "site": "north"
+    },
+    "05-central-deployment": {
+      "title": "Sito Central: produzione attiva e servizi",
+      "c4_level": "Deployment",
+      "direction": "LR",
+      "nodes": [
+        "cmanagement",
+        "cobserv",
+        "cprod",
+        "cgit",
+        "cdata",
+        "css3",
+        "sgeo",
+        "sdata",
+        "ncold",
+        "saudit",
+        "csvc",
+        "sreg",
+        "ssvc",
+        "sobserv",
+        "sss3",
+        "smanagement"
+      ],
+      "relationships": [
+        "c1",
+        "c2",
+        "c3",
+        "c4",
+        "c5",
+        "n1",
+        "c7",
+        "c8",
+        "c9",
+        "c10",
+        "c11",
+        "c12",
+        "c13",
+        "f22",
+        "f23",
+        "n2",
+        "n7",
+        "s14",
+        "s15",
+        "s8"
+      ],
+      "groups": {
+        "Central: attivo": [
+          "cmanagement",
+          "cobserv",
+          "cprod",
+          "cgit",
+          "cdata",
+          "css3",
+          "csvc"
+        ],
+        "South: failover": [
+          "sgeo",
+          "sdata",
+          "saudit",
+          "sreg",
+          "ssvc",
+          "sobserv",
+          "sss3",
+          "smanagement"
+        ],
+        "North: off-site": [
+          "ncold"
+        ]
+      },
+      "site": "central"
+    },
+    "06-south-deployment": {
+      "title": "Sito South: self-service e ripristino a caldo",
+      "c4_level": "Deployment",
+      "direction": "LR",
+      "nodes": [
+        "smanagement",
+        "sobserv",
+        "sdr",
+        "snonprod",
+        "sgeo",
+        "sdata",
+        "sss3",
+        "cgit",
+        "ncold",
+        "saudit",
+        "ssvc",
+        "svcenter",
+        "sreg",
+        "csvc",
+        "cobserv",
+        "cdata",
+        "cmanagement",
+        "nrestore"
+      ],
+      "relationships": [
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "s5",
+        "s6",
+        "s7",
+        "s8",
+        "n6",
+        "s10",
+        "s11",
+        "s12",
+        "s13",
+        "c10",
+        "c11",
+        "s14",
+        "s15",
+        "c12",
+        "c13",
+        "c4",
+        "c5",
+        "c9",
+        "f22",
+        "f23",
+        "n5",
+        "n8"
+      ],
+      "groups": {
+        "South: attivo indipendente + standby": [
+          "smanagement",
+          "sobserv",
+          "sdr",
+          "snonprod",
+          "sgeo",
+          "sdata",
+          "sss3",
+          "saudit",
+          "ssvc",
+          "svcenter",
+          "sreg"
+        ],
+        "Central: primario": [
+          "cgit",
+          "csvc",
+          "cobserv",
+          "cdata",
+          "cmanagement"
+        ],
+        "North: archivio immutabile": [
+          "ncold",
+          "nrestore"
+        ]
+      },
+      "site": "south"
+    },
+    "07-observability-components": {
+      "title": "Componenti di osservabilità: un sito attivo (Central e South identici)",
+      "c4_level": "Component",
+      "direction": "LR",
+      "nodes": [
+        "app",
+        "alloy",
+        "gateway",
+        "querygw",
+        "mimir",
+        "loki",
+        "tempo",
+        "grafana",
+        "alert",
+        "bucket",
+        "broker",
+        "caches",
+        "pv",
+        "dbmeta",
+        "oidc",
+        "auditrelay",
+        "auditarch",
+        "meta",
+        "deadman",
+        "team"
+      ],
+      "relationships": [
+        "o1",
+        "o2",
+        "o3",
+        "o4",
+        "o5",
+        "o6",
+        "o7",
+        "o8",
+        "o9",
+        "o10",
+        "o11",
+        "o12",
+        "o13",
+        "o14",
+        "o15",
+        "o16",
+        "o17",
+        "o18",
+        "o19",
+        "o20",
+        "o21",
+        "o22",
+        "o23",
+        "o24",
+        "o25",
+        "o26",
+        "o27",
+        "o28",
+        "o29"
+      ],
+      "groups": {
+        "Sorgenti e collector": [
+          "app",
+          "alloy"
+        ],
+        "Confine dei tenant (scrittura e lettura)": [
+          "gateway",
+          "querygw"
+        ],
+        "Servizi LGTM in HA (SRE)": [
+          "mimir",
+          "loki",
+          "tempo",
+          "grafana",
+          "alert"
+        ],
+        "Servizi di supporto (con il team fornitore)": [
+          "bucket",
+          "broker",
+          "caches",
+          "pv",
+          "dbmeta",
+          "oidc"
+        ],
+        "Fuori banda: audit e metamonitoring": [
+          "auditrelay",
+          "auditarch",
+          "meta",
+          "deadman"
+        ]
+      }
+    }
+  }
+}

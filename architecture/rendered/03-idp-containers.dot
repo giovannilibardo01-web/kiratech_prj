@@ -1,0 +1,50 @@
+digraph G {
+  graph [fontname="Arial", bgcolor="white", labeljust=l, labelloc=t, fontsize=19, fontcolor="#18344e", pad=0.35, nodesep=0.65, ranksep=0.90, splines=polyline, overlap=false, concentrate=false, outputorder=edgesfirst];
+  graph [label=<Internal Developer Platform: container C4<BR/><FONT POINT-SIZE="12">Architettura proposta | non è un sistema in esercizio</FONT><BR/><FONT POINT-SIZE="10" COLOR="#496377">Notazione in stile C4 resa con Graphviz (non Structurizr). Riquadro: nome, [tipo C4: tecnologia] | sito, owner; nel file SVG la descrizione compare al passaggio del mouse.</FONT>>, rankdir=LR];
+  node [shape=box, style="rounded,filled", fontname="Arial"];
+  edge [fontname="Arial", fontsize=8.5, color="#60778c", fontcolor="#526478", arrowsize=0.67, penwidth=1.3];
+  subgraph cluster_0 {
+    label="Esperienza utente"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "backstage" [label="Catalogo Backstage\n[Container: Backstage] | South\n(primario) / Central (standby)\nOwner: Platform Engineering", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Catalogo e template; apre solo merge request, nessun accesso ai cluster."];
+  }
+  subgraph cluster_1 {
+    label="Gestione e delivery"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "ci" [label="CI protetta / registry\nGitLab\n[Container: GitLab CI, runner\nprotetti, policy di sicurezza] |\nCentral/South\nOwner: Platform Engineering", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Validazione iniettata, scansioni, SBOM, firma."];
+    "iac" [label="OpenTofu e state protetto\n[Container: OpenTofu, remote state\nversionato] | Central/South\nOwner: Platform Engineering", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Primitive infrastrutturali e bootstrap dei cluster."];
+    "capi" [label="Controller CAPI + CAPV\n[Container: Cluster API + CAPV] |\nCentral/South\nOwner: Platform Engineering", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Ciclo di vita dei cluster sul vCenter locale del sito."];
+    "flux" [label="GitOps Flux per cluster\n[Container: Flux, multi-tenancy\nlockdown] | Central/South\nOwner: Platform Engineering", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Riconciliazione pull-based; i tenant impersonano account limitati al namespace."];
+  }
+  subgraph cluster_2 {
+    label="Enforcement e tenant"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "policy" [label="Kyverno / PSS / RBAC / CNI\n[Container: Kyverno, PSS, RBAC,\nNetworkPolicy] | Central/South\nOwner: Platform Engineering (il\nCISO approva le policy)", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Enforcement in admission e report delle policy."];
+    "secrets" [label="Integrazione External\nSecrets\n[Container: External Secrets\nOperator] | Central/South\nOwner: Platform Engineering", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Store per namespace che leggono il secret manager del sito."];
+    "kapi" [label="API server Kubernetes\n[Container: kube-apiserver] |\nCentral/South\nOwner: Platform Engineering", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="In ogni cluster; origine degli eventi di audit Kubernetes e chiamante dei webhook di admission."];
+  }
+  subgraph cluster_3 {
+    label="Telemetria ed evidenze"; style="rounded,dashed"; color="#b3c2d3";    fontname="Arial"; fontsize=11; fontcolor="#496377"; margin=16;
+    "telemetry" [label="Collector Alloy locali\n[Container: Grafana Alloy] |\nCentral/South\nOwner: SRE", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Collector gestiti dalla piattaforma; tenant ricavato dai metadati Kubernetes."];
+    "lgtm" [label="Mimir / Loki / Tempo /\nGrafana\n[Container: Mimir, Loki, Tempo,\nGrafana] | Central/South\nOwner: SRE", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Data plane di osservabilità per sito."];
+    "auditrelay" [label="Relay di audit (con ACK)\n[Componente: Relay dedicato con\nspool su disco] | Central/South\nOwner: SRE", fillcolor="#e4f3f2", color="#247b72", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Separato dall'ingest LGTM; numeri di sequenza, conferma di ricezione e manifest di hash."];
+    "runbooks" [label="SLO / Alertmanager / runbook\n[Container: Ruler, Alertmanager,\nrunbook] | Central/South\nOwner: SRE", fillcolor="#e7f4fa", color="#277896", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Alert sugli SLO instradati ai quattro team."];
+  }
+  "dev" [label="Sviluppatori di business\n[Persona]", fillcolor="#fff8ec", color="#a67327", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Team di business che richiedono e usano ambienti di sviluppo e test."];
+  "security" [label="IAM / PKI / secret manager\naziendali\n[Sistema esterno: IdP, PKI, secret\nmanager, HSM/KMS per sito] | più\nsiti\nOwner: Network Security", fillcolor="#edf4f9", color="#3b667c", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Servizi abilitanti istanziati in Central e South (ADR 0011)."];
+  "audit" [label="Backup e archivio di audit\nimmutabile\n[Sistema software: Compatibile S3,\nObject Lock in compliance mode] |\nNorth\nOwner: Data Engineering (storage);\nadmin della retention designato\ndal CISO", fillcolor="#e8f0ff", color="#3366a8", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="Backup e archivio di audit immutabile in North; seconda copia di audit in South (ADR 0010)."];
+  "gitlab" [label="GitLab Ultimate primario +\nGeo\n[Sistema software: GitLab Ultimate\nprimario (Central) + Geo\nsecondario (South)] |\nCentral/South\nOwner: Platform Engineering", fillcolor="#e8f0ff", color="#3366a8", fontcolor="#182c3d", penwidth=1.4, fontsize=11, width=2.4, margin="0.16,0.12", tooltip="SCM, CI, registry e policy di sicurezza."];
+  "dev" -> "backstage" [label="Consulta/richiede", color="#60778c", style="solid"];
+  "backstage" -> "ci" [label="Apre MR protetta", color="#60778c", style="solid"];
+  "ci" -> "iac" [label="Pipeline approvata", color="#60778c", style="solid"];
+  "iac" -> "capi" [label="Crea le risorse dei\ncluster", color="#60778c", style="solid"];
+  "ci" -> "flux" [label="Stato desiderato\napprovato", color="#60778c", style="solid"];
+  "flux" -> "policy" [label="Riconcilia la\nbaseline", color="#60778c", style="solid"];
+  "policy" -> "secrets" [label="Riferimenti\ncircoscritti ai\nsecret", color="#60778c", style="solid"];
+  "flux" -> "telemetry" [label="Distribuisce\ncollector + registry\ndei tenant", color="#60778c", style="solid"];
+  "telemetry" -> "lgtm" [label="Ingest locale\nprotetto", color="#60778c", style="solid"];
+  "lgtm" -> "runbooks" [label="SLI e alert", color="#60778c", style="solid"];
+  "auditrelay" -> "audit" [label="Audit in append\n(WORM)", color="#60778c", style="solid"];
+  "policy" -> "auditrelay" [label="Decisioni di\nadmission / report\ndelle policy", color="#60778c", style="solid"];
+  "backstage" -> "security" [label="Mappatura dei gruppi\nOIDC", color="#60778c", style="solid"];
+  "ci" -> "gitlab" [label="Funzioni native di\nGitLab", color="#60778c", style="solid"];
+  "kapi" -> "auditrelay" [label="Log di audit API\n(shipper)", color="#60778c", style="solid"];
+  "kapi" -> "policy" [label="Chiamate ai webhook\ndi admission", color="#60778c", style="solid"];
+}
